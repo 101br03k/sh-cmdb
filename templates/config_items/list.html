@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}Config Items{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h1>Configuration Items</h1>
+    <a href="{{ url_for('create_config_item') }}" class="btn btn-primary">+ New Config Item</a>
+</div>
+
+<div class="filter-bar" style="flex-direction: column; align-items: stretch;">
+    <form method="GET" id="filterForm">
+        <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem;">
+            <select name="ci_type" onchange="this.form.submit()">
+                <option value="">All CI Types</option>
+                {% for ci_type in ci_types %}
+                <option value="{{ ci_type.id }}" {% if selected_ci_type == ci_type.id %}selected{% endif %}>
+                    {{ ci_type.name }}
+                </option>
+                {% endfor %}
+            </select>
+
+            <select name="status" onchange="this.form.submit()">
+                <option value="">All Statuses</option>
+                {% for status in statuses %}
+                <option value="{{ status.name }}" {% if selected_status == status.name %}selected{% endif %}>
+                    {{ status.label }}
+                </option>
+                {% endfor %}
+                {% if not statuses %}
+                <option value="active">Active</option>
+                <option value="maintenance">Maintenance</option>
+                <option value="retired">Retired</option>
+                {% endif %}
+            </select>
+        </div>
+
+        {% if fields %}
+        <div style="border-top: 1px solid #dee2e6; padding-top: 1rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                <strong style="color: #667eea;">Custom Field Filters</strong>
+                <button type="button" class="btn btn-secondary" onclick="addFilterRow()" style="padding: 0.4rem 0.8rem; font-size: 0.875rem;">+ Add Filter</button>
+            </div>
+            <div id="filterRows">
+                <!-- Filter rows will be added dynamically -->
+            </div>
+        </div>
+        {% endif %}
+
+        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+            <button type="submit" class="btn btn-primary">Apply Filters</button>
+            <a href="{{ url_for('list_config_items') }}" class="btn btn-secondary">Clear All Filters</a>
+        </div>
+    </form>
+</div>
+
+<script>
+let filterRowCount = 0;
+const fields = {{ fields_json | tojson | default('[]') }};
+const existingFilters = {{ selected_field_filters | tojson | default('{}') }};
+
+function addFilterRow(fieldId = '', operator = 'contains', value = '') {
+    const container = document.getElementById('filterRows');
+    const rowId = filterRowCount++;
+
+    const row = document.createElement('div');
+    row.className = 'filter-row';
+    row.dataset.rowId = rowId;
+
+    let fieldOptions = '<option value="">Select field...</option>';
+    fields.forEach(f => {
+        const selected = f.id == fieldId ? 'selected' : '';
+        fieldOptions += `<option value="${f.id}" ${selected}>${f.label}</option>`;
+    });
+
+    const operators = [
+        { value: 'contains', label: 'Contains' },
+        { value: 'not_contains', label: 'Does not contain' },
+        { value: 'equals', label: 'Equals' },
+        { value: 'not_equals', label: 'Does not equal' },
+        { value: 'starts_with', label: 'Starts with' },
+        { value: 'ends_with', label: 'Ends with' }
+    ];
+
+    let operatorOptions = '';
+    operators.forEach(op => {
+        const selected = op.value === operator ? 'selected' : '';
+        operatorOptions += `<option value="${op.value}" ${selected}>${op.label}</option>`;
+    });
+
+    row.innerHTML = `
+        <select name="filter_field_${rowId}" class="filter-field-select" onchange="updateFilterRow(${rowId})">
+            ${fieldOptions}
+        </select>
+        <select name="filter_operator_${rowId}" class="filter-operator-select">
+            ${operatorOptions}
+        </select>
+        <input type="text" name="filter_value_${rowId}" class="filter-value-input" placeholder="Value..." value="${value}">
+        <button type="button" class="btn btn-danger" onclick="removeFilterRow(${rowId})">×</button>
+    `;
+
+    container.appendChild(row);
+}
+
+function updateFilterRow(rowId) {
+    // Can be extended to handle field-type-specific logic
+}
+
+function removeFilterRow(rowId) {
+    const row = document.querySelector(`.filter-row[data-row-id="${rowId}"]`);
+    if (row) {
+        row.remove();
+        renumberFilterRows();
+    }
+}
+
+function renumberFilterRows() {
+    const rows = document.querySelectorAll('.filter-row');
+    filterRowCount = 0;
+    rows.forEach(row => {
+        const oldId = row.dataset.rowId;
+        const newId = filterRowCount++;
+        row.dataset.rowId = newId;
+        
+        // Update field select
+        const fieldSelect = row.querySelector('.filter-field-select');
+        if (fieldSelect) {
+            fieldSelect.name = `filter_field_${newId}`;
+            fieldSelect.setAttribute('onchange', `updateFilterRow(${newId})`);
+        }
+        
+        // Update operator select
+        const operatorSelect = row.querySelector('.filter-operator-select');
+        if (operatorSelect) {
+            operatorSelect.name = `filter_operator_${newId}`;
+        }
+        
+        // Update value input
+        const valueInput = row.querySelector('.filter-value-input');
+        if (valueInput) {
+            valueInput.name = `filter_value_${newId}`;
+        }
+        
+        // Update remove button
+        const removeBtn = row.querySelector('.btn-danger');
+        if (removeBtn) {
+            removeBtn.setAttribute('onclick', `removeFilterRow(${newId})`);
+        }
+    });
+}
+
+// Renumber before form submission
+document.getElementById('filterForm').addEventListener('submit', function(e) {
+    renumberFilterRows();
+});
+
+// Initialize with existing filters
+document.addEventListener('DOMContentLoaded', function() {
+    const existingKeys = Object.keys(existingFilters);
+    if (existingKeys.length > 0) {
+        existingKeys.forEach(key => {
+            // Parse key like "field_1_contains"
+            const match = key.match(/^field_(\d+)_(.+)$/);
+            if (match) {
+                const fieldId = match[1];
+                const operator = match[2];
+                const value = existingFilters[key];
+                addFilterRow(fieldId, operator, value);
+            }
+        });
+    } else if (fields.length > 0) {
+        // Add one empty filter row to start
+        addFilterRow();
+    }
+});
+</script>
+
+{% if config_items %}
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Description</th>
+            <th>Created</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in config_items %}
+        <tr>
+            <td>
+                <a href="{{ url_for('view_config_item', ci_id=item.id) }}"><strong>{{ item.name }}</strong></a>
+            </td>
+            <td>{{ item.ci_type.name }}</td>
+            <td>
+                {% set status_obj = statuses|selectattr('name', 'equalto', item.status)|first %}
+                {% if status_obj %}
+                <span class="badge badge-{{ status_obj.color }}">{{ status_obj.label }}</span>
+                {% elif item.status == 'active' %}
+                <span class="badge badge-success">{{ item.status }}</span>
+                {% elif item.status == 'maintenance' %}
+                <span class="badge badge-warning">{{ item.status }}</span>
+                {% else %}
+                <span class="badge badge-secondary">{{ item.status }}</span>
+                {% endif %}
+            </td>
+            <td>{{ (item.description or '-')[:50] }}{{ '...' if item.description and item.description|length > 50 else '' }}</td>
+            <td>{{ item.created_at.strftime('%Y-%m-%d') }}</td>
+            <td class="actions">
+                <a href="{{ url_for('view_config_item', ci_id=item.id) }}" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">View</a>
+                <a href="{{ url_for('edit_config_item', ci_id=item.id) }}" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Edit</a>
+                <a href="{{ url_for('manage_relationships', ci_id=item.id) }}" class="btn btn-success" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Relations</a>
+                <form method="POST" action="{{ url_for('delete_config_item', ci_id=item.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure?');">
+                    <button type="submit" class="btn btn-danger" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="card" style="text-align: center; padding: 3rem;">
+    <p style="color: #666; margin-bottom: 1rem;">No configuration items found.</p>
+    <a href="{{ url_for('create_config_item') }}" class="btn btn-primary">Create your first Config Item</a>
+</div>
+{% endif %}
+{% endblock %}

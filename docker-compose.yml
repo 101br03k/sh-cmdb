@@ -1,0 +1,20 @@
+services:
+  cmdb:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sh-cmdb
+    ports:
+      - "5000:5000"
+    environment:
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-in-production}
+      - DATABASE_URL=sqlite:////app/data/cmdb.sqlite
+    volumes:
+      - ./cmdb_data:/app/data
+    restart: unless-stopped
+    networks:
+      - cmdb_network
+
+networks:
+  cmdb_network:
+    driver: bridge

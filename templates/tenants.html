@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Select Tenant{% endblock %}
+
+{% block content %}
+<h1 style="margin-bottom: 2rem;">Select Organization</h1>
+<p style="color: #666; margin-bottom: 2rem;">Choose which organization's CMDB you want to access</p>
+
+<div class="stats-grid">
+    {% for tenant in tenants %}
+    <div class="stat-card" style="cursor: pointer; transition: transform 0.3s;" 
+         onclick="window.location.href='{{ url_for('switch_tenant', tenant_id=tenant.id) }}'"
+         onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+        <h3 style="font-size: 1.5rem;">{{ tenant.name }}</h3>
+        <p>{{ tenant.description or 'No description' }}</p>
+        <p style="font-size: 0.8rem; margin-top: 1rem; opacity: 0.8;">
+            Created: {{ tenant.created_at.strftime('%Y-%m-%d') }}
+        </p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

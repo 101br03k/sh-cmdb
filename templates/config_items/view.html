@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}{{ config_item.name }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <div>
+        <h1>{{ config_item.name }}</h1>
+        <p style="color: #666;">{{ config_item.description or 'No description' }}</p>
+    </div>
+    <div class="actions">
+        <a href="{{ url_for('view_config_item_history', ci_id=config_item.id) }}" class="btn btn-info" style="background: #17a2b8; color: white;">📜 History</a>
+        <a href="{{ url_for('manage_relationships', ci_id=config_item.id) }}" class="btn btn-success">Manage Relationships</a>
+        <a href="{{ url_for('edit_config_item', ci_id=config_item.id) }}" class="btn btn-primary">Edit</a>
+        <a href="{{ url_for('list_config_items') }}" class="btn btn-secondary">Back to List</a>
+    </div>
+</div>
+
+<div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+    <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <p style="font-size: 0.9rem;">CI Type</p>
+        <h3 style="font-size: 1.5rem;">{{ config_item.ci_type.name }}</h3>
+    </div>
+    <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+        <p style="font-size: 0.9rem;">Status</p>
+        <h3 style="font-size: 1.5rem;">
+            {% if config_item.status == 'active' %}
+            <span class="badge badge-success">{{ config_item.status }}</span>
+            {% elif config_item.status == 'maintenance' %}
+            <span class="badge badge-warning">{{ config_item.status }}</span>
+            {% else %}
+            <span class="badge badge-danger">{{ config_item.status }}</span>
+            {% endif %}
+        </h3>
+    </div>
+    <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+        <p style="font-size: 0.9rem;">Created</p>
+        <h3 style="font-size: 1.5rem;">{{ config_item.created_at.strftime('%Y-%m-%d') }}</h3>
+    </div>
+</div>
+
+<div class="card">
+    <h2 style="margin-bottom: 1rem;">Custom Fields</h2>
+    {% if config_item.field_values %}
+    <table>
+        <thead>
+            <tr>
+                <th>Field</th>
+                <th>Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for fv in config_item.field_values %}
+            <tr>
+                <td><strong>{{ fv.field.label }}</strong> <code style="font-size: 0.8rem; color: #666;">({{ fv.field.name }})</code></td>
+                <td>
+                    {% if fv.field.field_type == 'boolean' %}
+                        {% if fv.value_text == 'true' %}✓ Yes{% else %}✗ No{% endif %}
+                    {% elif fv.field.field_type == 'url' %}
+                        <a href="{{ fv.value_text }}" target="_blank">{{ fv.value_text }}</a>
+                    {% elif fv.field.field_type == 'email' %}
+                        <a href="mailto:{{ fv.value_text }}">{{ fv.value_text }}</a>
+                    {% else %}
+                        {{ fv.value_text or '-' }}
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color: #666;">No custom field values set.</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2 style="margin-bottom: 1rem;">Relationships</h2>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+        <div>
+            <h3 style="margin-bottom: 0.5rem; color: #667eea;">Outgoing Relationships</h3>
+            {% if config_item.relationships %}
+            <ul style="list-style: none; padding: 0;">
+                {% for rel in config_item.relationships %}
+                <li style="padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+                    <strong>{{ rel.relationship_type }}</strong> → 
+                    <a href="{{ url_for('view_config_item', ci_id=rel.target_ci_id) }}">{{ rel.target.name }}</a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p style="color: #666;">No outgoing relationships</p>
+            {% endif %}
+        </div>
+        
+        <div>
+            <h3 style="margin-bottom: 0.5rem; color: #667eea;">Incoming Relationships</h3>
+            {% if config_item.dependent_relationships %}
+            <ul style="list-style: none; padding: 0;">
+                {% for rel in config_item.dependent_relationships %}
+                <li style="padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+                    <a href="{{ url_for('view_config_item', ci_id=rel.source_ci_id) }}">{{ rel.source.name }}</a>
+                    <strong>{{ rel.relationship_type }}</strong> → this
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p style="color: #666;">No incoming relationships</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2>Recent History</h2>
+        <a href="{{ url_for('view_config_item_history', ci_id=config_item.id) }}" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">View All</a>
+    </div>
+    {% if config_item.history %}
+    <table>
+        <thead>
+            <tr>
+                <th>Action</th>
+                <th>Field</th>
+                <th>Changed By</th>
+                <th>When</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for h in config_item.history[:5] %}
+            <tr>
+                <td>
+                    {% if h.action == 'created' %}
+                    <span class="badge badge-success">Created</span>
+                    {% elif h.action == 'updated' %}
+                    <span class="badge badge-info">Updated</span>
+                    {% elif h.action == 'status_changed' %}
+                    <span class="badge badge-warning">Status Changed</span>
+                    {% elif h.action == 'deleted' %}
+                    <span class="badge badge-danger">Deleted</span>
+                    {% else %}
+                    <span class="badge badge-secondary">{{ h.action }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ h.field_name or '-' }}</td>
+                <td>{{ h.user.username }}</td>
+                <td>{{ h.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color: #666;">No history recorded yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

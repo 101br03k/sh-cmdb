@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Server Error{% endblock %}
+
+{% block content %}
+<div style="text-align: center; padding: 3rem 0;">
+    <h1 style="font-size: 4rem; color: #dc3545;">500</h1>
+    <h2 style="margin-bottom: 1rem;">Internal Server Error</h2>
+    <p style="color: #666; margin-bottom: 2rem;">Something went wrong. Please try again later.</p>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Go to Dashboard</a>
+</div>
+{% endblock %}

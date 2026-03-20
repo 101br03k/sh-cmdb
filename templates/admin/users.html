@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Users{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h1>User Management</h1>
+    <a href="{{ url_for('admin_create_user') }}" class="btn btn-primary">+ New User</a>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Roles</th>
+            <th>Created</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <tr>
+            <td>
+                <strong>{{ user.username }}</strong>
+                {% if user.id == current_user.id %}
+                <span class="badge badge-info" style="font-size: 0.7rem;">You</span>
+                {% endif %}
+            </td>
+            <td>{{ user.email }}</td>
+            <td>
+                {% if user.is_admin %}
+                <span class="badge badge-danger">Admin</span>
+                {% endif %}
+                {% if user.is_owner %}
+                <span class="badge badge-success">Owner</span>
+                {% endif %}
+                {% if not user.is_admin and not user.is_owner %}
+                <span class="badge badge-secondary">User</span>
+                {% endif %}
+            </td>
+            <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+            <td>
+                {% if user.is_active %}
+                <span class="badge badge-success">Active</span>
+                {% else %}
+                <span class="badge badge-danger">Inactive</span>
+                {% endif %}
+            </td>
+            <td class="actions">
+                <a href="{{ url_for('admin_edit_user', user_id=user.id) }}" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Edit</a>
+                {% if user.id != current_user.id %}
+                <form method="POST" action="{{ url_for('admin_delete_user', user_id=user.id) }}" style="display: inline;" onsubmit="return confirm('Delete user {{ user.username }}?');">
+                    <button type="submit" class="btn btn-danger" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Delete</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

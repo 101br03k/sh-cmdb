@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Relationships - {{ config_item.name }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <div>
+        <h1>Relationships: {{ config_item.name }}</h1>
+        <p style="color: #666;">Manage dependencies and connections</p>
+    </div>
+    <a href="{{ url_for('view_config_item', ci_id=config_item.id) }}" class="btn btn-secondary">Back to Item</a>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+    <div>
+        <h2 style="margin-bottom: 1rem;">Outgoing Relationships</h2>
+        <div class="card">
+            {% if outgoing %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Target</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rel in outgoing %}
+                    <tr>
+                        <td>{{ rel.relationship_type }}</td>
+                        <td>
+                            <a href="{{ url_for('view_config_item', ci_id=rel.target_ci_id) }}">{{ rel.target.name }}</a>
+                        </td>
+                        <td>
+                            <form method="POST" action="{{ url_for('delete_relationship', rel_id=rel.id) }}" onsubmit="return confirm('Delete this relationship?');">
+                                <button type="submit" class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p style="color: #666;">No outgoing relationships</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div>
+        <h2 style="margin-bottom: 1rem;">Incoming Relationships</h2>
+        <div class="card">
+            {% if incoming %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Source</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rel in incoming %}
+                    <tr>
+                        <td>{{ rel.relationship_type }}</td>
+                        <td>
+                            <a href="{{ url_for('view_config_item', ci_id=rel.source_ci_id) }}">{{ rel.source.name }}</a>
+                        </td>
+                        <td>
+                            <form method="POST" action="{{ url_for('delete_relationship', rel_id=rel.id) }}" onsubmit="return confirm('Delete this relationship?');">
+                                <button type="submit" class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p style="color: #666;">No incoming relationships</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 2rem;">
+    <h2 style="margin-bottom: 1rem;">Add New Relationship</h2>
+    <form method="POST" style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 1rem; align-items: end;">
+        <div class="form-group" style="margin: 0;">
+            <label for="target_ci_id">Target Config Item</label>
+            <select class="form-control" id="target_ci_id" name="target_ci_id" required>
+                <option value="">Select Config Item</option>
+                {% for ci in all_cis %}
+                <option value="{{ ci.id }}">{{ ci.name }} ({{ ci.ci_type.name }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group" style="margin: 0;">
+            <label for="relationship_type">Relationship Type</label>
+            <select class="form-control" id="relationship_type" name="relationship_type" required>
+                <option value="">Select Type</option>
+                <option value="depends_on">Depends On</option>
+                <option value="hosted_on">Hosted On</option>
+                <option value="connected_to">Connected To</option>
+                <option value="part_of">Part Of</option>
+                <option value="uses">Uses</option>
+                <option value="managed_by">Managed By</option>
+            </select>
+        </div>
+        
+        <div class="form-group" style="margin: 0;">
+            <label for="description">Description</label>
+            <input type="text" class="form-control" id="description" name="description" placeholder="Optional">
+        </div>
+        
+        <button type="submit" class="btn btn-primary" style="height: fit-content;">Add Relationship</button>
+    </form>
+</div>
+{% endblock %}

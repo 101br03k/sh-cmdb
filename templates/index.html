@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div style="text-align: center; padding: 3rem 0;">
+    <h1 style="font-size: 3rem; margin-bottom: 1rem;">Welcome to SH-CMDB</h1>
+    <p style="font-size: 1.25rem; color: #666; margin-bottom: 2rem;">
+        Manage your IT infrastructure and configuration items across multiple organizations
+    </p>
+    
+    <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
+        <a href="{{ url_for('login') }}" class="btn btn-primary">Login</a>
+        <a href="{{ url_for('register') }}" class="btn btn-success">Register</a>
+    </div>
+</div>
+
+<div style="margin-top: 4rem;">
+    <h2 style="text-align: center; margin-bottom: 2rem;">Features</h2>
+    <div class="stats-grid">
+        <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <h3>🏢</h3>
+            <p>Multi-Tenant Support</p>
+            <p style="font-size: 0.9rem; margin-top: 0.5rem;">Separate CMDB instances for different organizations</p>
+        </div>
+        <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <h3>📦</h3>
+            <p>Configuration Items</p>
+            <p style="font-size: 0.9rem; margin-top: 0.5rem;">Track servers, applications, networks, and more</p>
+        </div>
+        <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            <h3>🔗</h3>
+            <p>Relationships</p>
+            <p style="font-size: 0.9rem; margin-top: 0.5rem;">Map dependencies between your infrastructure</p>
+        </div>
+        <div class="stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+            <h3>🔐</h3>
+            <p>Authentication</p>
+            <p style="font-size: 0.9rem; margin-top: 0.5rem;">Secure user management with role-based access</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

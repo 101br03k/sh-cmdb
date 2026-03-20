@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit' if config_item else 'New' }} Config Item{% endblock %}
+
+{% block content %}
+<h1 style="margin-bottom: 2rem;">{{ 'Edit' if config_item else 'New' }} Config Item</h1>
+
+<form method="POST" style="max-width: 700px;">
+    <div class="form-group">
+        <label for="name">Name *</label>
+        <input type="text" class="form-control" id="name" name="name" required
+               value="{{ config_item.name if config_item else '' }}"
+               placeholder="e.g., web-server-01, production-db">
+    </div>
+
+    <div class="form-group">
+        <label for="ci_type_id">CI Type *</label>
+        <select class="form-control" id="ci_type_id" name="ci_type_id" required onchange="loadFields()">
+            <option value="">Select CI Type</option>
+            {% for ci_type in ci_types %}
+            <option value="{{ ci_type.id }}"
+                    data-fields='{{ ci_types_with_fields[loop.index0].fields|tojson }}'
+                    {% if config_item and config_item.ci_type_id == ci_type.id %}selected{% endif %}>
+                {{ ci_type.name }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="status">Status</label>
+        <select class="form-control" id="status" name="status">
+            {% if statuses %}
+                {% for status in statuses %}
+                <option value="{{ status.name }}" {% if (config_item and config_item.status == status.name) or (not config_item and status.is_default) %}selected{% endif %}>
+                    {{ status.label }}
+                </option>
+                {% endfor %}
+            {% else %}
+                <option value="active" {% if not config_item or config_item.status == 'active' %}selected{% endif %}>Active</option>
+                <option value="maintenance" {% if config_item and config_item.status == 'maintenance' %}selected{% endif %}>Maintenance</option>
+                <option value="retired" {% if config_item and config_item.status == 'retired' %}selected{% endif %}>Retired</option>
+            {% endif %}
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="description">Description</label>
+        <textarea class="form-control" id="description" name="description"
+                  placeholder="Describe this configuration item">{{ config_item.description if config_item else '' }}</textarea>
+    </div>
+
+    <!-- Dynamic Custom Fields -->
+    <div id="customFieldsContainer" style="margin-top: 2rem;">
+        <h3 style="margin-bottom: 1rem; color: #667eea;">Custom Fields</h3>
+        <div id="customFields"></div>
+    </div>
+
+    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+        <button type="submit" class="btn btn-primary">{{ 'Update' if config_item else 'Create' }}</button>
+        <a href="{{ url_for('list_config_items') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+
+<script>
+// Field values from existing config item
+const existingValues = {
+    {% if config_item and config_item.field_values %}
+    {% for fv in config_item.field_values %}
+    {{ fv.field_id }}: "{{ fv.value_text or '' }}"{% if not loop.last %},{% endif %}
+    {% endfor %}
+    {% endif %}
+};
+
+function loadFields() {
+    const ciTypeSelect = document.getElementById('ci_type_id');
+    const selectedOption = ciTypeSelect.options[ciTypeSelect.selectedIndex];
+    const fieldsContainer = document.getElementById('customFields');
+    
+    if (!selectedOption.value) {
+        fieldsContainer.innerHTML = '<p style="color: #666;">Select a CI type to see custom fields</p>';
+        return;
+    }
+    
+    const fields = JSON.parse(selectedOption.getAttribute('data-fields') || '[]');
+    
+    if (fields.length === 0) {
+        fieldsContainer.innerHTML = '<p style="color: #666;">No custom fields defined for this CI type</p>';
+        return;
+    }
+    
+    // Sort fields by display_order
+    fields.sort((a, b) => a.display_order - b.display_order);
+    
+    let html = '';
+    fields.forEach(field => {
+        const value = existingValues[field.id] || field.default_value || '';
+        const required = field.is_required ? 'required' : '';
+        const label = field.label + (field.is_required ? ' *' : '');
+        
+        let inputHtml = '';
+        
+        switch(field.field_type) {
+            case 'textarea':
+                inputHtml = `<textarea class="form-control" id="field_${field.id}" name="field_${field.id}" rows="3" ${required}>${escapeHtml(value)}</textarea>`;
+                break;
+            case 'select':
+                const options = (field.options || '').split(',').map(o => o.trim());
+                inputHtml = `<select class="form-control" id="field_${field.id}" name="field_${field.id}" ${required}>`;
+                inputHtml += `<option value="">Select...</option>`;
+                options.forEach(opt => {
+                    const selected = value === opt ? 'selected' : '';
+                    inputHtml += `<option value="${escapeHtml(opt)}" ${selected}>${escapeHtml(opt)}</option>`;
+                });
+                inputHtml += `</select>`;
+                break;
+            case 'boolean':
+                inputHtml = `<select class="form-control" id="field_${field.id}" name="field_${field.id}" ${required}>`;
+                inputHtml += `<option value="">Select...</option>`;
+                inputHtml += `<option value="true" ${value === 'true' ? 'selected' : ''}>Yes</option>`;
+                inputHtml += `<option value="false" ${value === 'false' ? 'selected' : ''}>No</option>`;
+                inputHtml += `</select>`;
+                break;
+            case 'date':
+                inputHtml = `<input type="date" class="form-control" id="field_${field.id}" name="field_${field.id}" value="${escapeHtml(value)}" ${required}>`;
+                break;
+            case 'email':
+                inputHtml = `<input type="email" class="form-control" id="field_${field.id}" name="field_${field.id}" value="${escapeHtml(value)}" ${required}>`;
+                break;
+            case 'url':
+                inputHtml = `<input type="url" class="form-control" id="field_${field.id}" name="field_${field.id}" value="${escapeHtml(value)}" ${required}>`;
+                break;
+            case 'number':
+                inputHtml = `<input type="number" class="form-control" id="field_${field.id}" name="field_${field.id}" value="${escapeHtml(value)}" ${required}>`;
+                break;
+            default: // text
+                inputHtml = `<input type="text" class="form-control" id="field_${field.id}" name="field_${field.id}" value="${escapeHtml(value)}" ${required}>`;
+        }
+        
+        html += `
+            <div class="form-group">
+                <label for="field_${field.id}">${escapeHtml(label)}</label>
+                ${inputHtml}
+            </div>
+        `;
+    });
+    
+    fieldsContainer.innerHTML = html;
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Load fields on page load if editing
+{% if config_item %}
+document.addEventListener('DOMContentLoaded', loadFields);
+{% elif selected_ci_type %}
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('ci_type_id').value = '{{ selected_ci_type }}';
+    loadFields();
+});
+{% endif %}
+</script>
+{% endblock %}

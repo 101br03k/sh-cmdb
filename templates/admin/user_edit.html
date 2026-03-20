@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Edit User{% endblock %}
+
+{% block content %}
+<h1 style="margin-bottom: 2rem;">Edit User</h1>
+
+<form method="POST" style="max-width: 500px;">
+    <div class="form-group">
+        <label for="username">Username *</label>
+        <input type="text" class="form-control" id="username" name="username" required 
+               value="{{ user.username }}" autofocus>
+    </div>
+    
+    <div class="form-group">
+        <label for="email">Email *</label>
+        <input type="email" class="form-control" id="email" name="email" required 
+               value="{{ user.email }}">
+    </div>
+    
+    <div class="form-group">
+        <label for="password">New Password</label>
+        <input type="password" class="form-control" id="password" name="password" 
+               placeholder="Leave blank to keep current password" minlength="6">
+        <small style="color: #666;">Leave blank to keep the current password</small>
+    </div>
+    
+    <div class="form-group">
+        <label style="display: flex; align-items: center; gap: 0.5rem;">
+            <input type="checkbox" id="is_admin" name="is_admin" {% if user.is_admin %}checked{% endif %}>
+            <span>Administrator privileges</span>
+        </label>
+        <small style="color: #666; margin-left: 1.5rem;">Can manage all CI types and users</small>
+    </div>
+    
+    <div class="form-group">
+        <label style="display: flex; align-items: center; gap: 0.5rem;">
+            <input type="checkbox" id="is_owner" name="is_owner" {% if user.is_owner %}checked{% endif %}>
+            <span>Owner privileges</span>
+        </label>
+        <small style="color: #666; margin-left: 1.5rem;">Can create and manage own CI types and fields</small>
+    </div>
+    
+    <div class="card" style="margin-top: 1.5rem;">
+        <h3 style="margin-bottom: 0.5rem;">User Information</h3>
+        <p style="color: #666; font-size: 0.9rem;">
+            <strong>Created:</strong> {{ user.created_at.strftime('%Y-%m-%d %H:%M') }}<br>
+            <strong>Last Login:</strong> {{ 'Never' if not user.last_login else user.last_login.strftime('%Y-%m-%d %H:%M') }}<br>
+            <strong>Status:</strong> 
+            {% if user.is_active %}
+            <span class="badge badge-success">Active</span>
+            {% else %}
+            <span class="badge badge-danger">Inactive</span>
+            {% endif %}
+        </p>
+    </div>
+    
+    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+        <button type="submit" class="btn btn-primary">Update User</button>
+        <a href="{{ url_for('admin_users') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+
+<div class="card" style="margin-top: 2rem; background: #fff3cd; border: 1px solid #ffc107;">
+    <h3 style="margin-bottom: 0.5rem; color: #856404;">⚠️ Danger Zone</h3>
+    <p style="color: #856404; margin-bottom: 1rem;">Once you delete a user, there is no going back. Please be certain.</p>
+    <form method="POST" action="{{ url_for('admin_delete_user', user_id=user.id) }}" 
+          onsubmit="return confirm('Are you sure you want to delete user {{ user.username }}? This action cannot be undone.');">
+        <button type="submit" class="btn btn-danger">Delete User</button>
+    </form>
+</div>
+{% endblock %}

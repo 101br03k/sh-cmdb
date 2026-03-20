@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CMDB{% endblock %} - SH-CMDB</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='cmdb-icon.svg') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <a href="{{ url_for('index') }}" class="navbar-brand">📊 SH-CMDB</a>
+            {% if current_user.is_authenticated %}
+            <ul class="navbar-nav">
+                <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('list_ci_types') }}">CI Types</a></li>
+                <li><a href="{{ url_for('list_config_items') }}">Config Items</a></li>
+                {% if current_user.is_admin %}
+                <li><a href="{{ url_for('admin_users') }}">Users</a></li>
+                {% endif %}
+                <li>
+                    <span style="color: #666;">| {{ current_user.username }}</span>
+                    {% if current_user.is_admin %}
+                    <span class="badge badge-danger" style="font-size: 0.7rem; margin-left: 0.25rem;">Admin</span>
+                    {% elif current_user.is_owner %}
+                    <span class="badge badge-success" style="font-size: 0.7rem; margin-left: 0.25rem;">Owner</span>
+                    {% endif %}
+                    <span style="color: #888; margin-left: 0.5rem;">({{ current_user.tenant.name }})</span>
+                </li>
+                <li><a href="{{ url_for('logout') }}">Logout</a></li>
+            </ul>
+            {% endif %}
+        </div>
+    </nav>
+    
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+        
+        <div class="content-wrapper">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <p>&copy; 2026 <a href="https://github.com/101br03k/sh-cmdb">SH-CMDB</a>. All rights reserved.</p>
+    </footer>
+</body>
+</html>

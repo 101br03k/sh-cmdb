@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit' if field else 'New' }} Field{% endblock %}
+
+{% block content %}
+<h1 style="margin-bottom: 2rem;">{{ 'Edit' if field else 'New' }} Field</h1>
+<p style="color: #666; margin-bottom: 2rem;">CI Type: <strong>{{ ci_type.name }}</strong></p>
+
+<form method="POST" style="max-width: 600px;">
+    <div class="form-group">
+        <label for="name">Field Name *</label>
+        <input type="text" class="form-control" id="name" name="name" required 
+               value="{{ field.name if field else '' }}" 
+               placeholder="e.g., ip_address, cpu_cores"
+               pattern="[a-z_][a-z0-9_]*"
+               title="Lowercase letters, numbers, and underscores only">
+        <small style="color: #666;">Internal name (lowercase, underscores, no spaces)</small>
+    </div>
+    
+    <div class="form-group">
+        <label for="label">Display Label *</label>
+        <input type="text" class="form-control" id="label" name="label" required 
+               value="{{ field.label if field else '' }}" 
+               placeholder="e.g., IP Address, CPU Cores">
+        <small style="color: #666;">Label shown in forms</small>
+    </div>
+    
+    <div class="form-group">
+        <label for="field_type">Field Type *</label>
+        <select class="form-control" id="field_type" name="field_type" required onchange="toggleOptions()">
+            <option value="text" {% if field and field.field_type == 'text' %}selected{% endif %}>Text (single line)</option>
+            <option value="textarea" {% if field and field.field_type == 'textarea' %}selected{% endif %}>Textarea (multi-line)</option>
+            <option value="number" {% if field and field.field_type == 'number' %}selected{% endif %}>Number</option>
+            <option value="email" {% if field and field.field_type == 'email' %}selected{% endif %}>Email</option>
+            <option value="url" {% if field and field.field_type == 'url' %}selected{% endif %}>URL</option>
+            <option value="date" {% if field and field.field_type == 'date' %}selected{% endif %}>Date</option>
+            <option value="select" {% if field and field.field_type == 'select' %}selected{% endif %}>Dropdown Select</option>
+            <option value="boolean" {% if field and field.field_type == 'boolean' %}selected{% endif %}>Boolean (Yes/No)</option>
+        </select>
+    </div>
+    
+    <div class="form-group" id="optionsGroup" style="display: none;">
+        <label for="options">Select Options</label>
+        <textarea class="form-control" id="options" name="options" 
+                  placeholder="Option 1, Option 2, Option 3">{{ field.options if field else '' }}</textarea>
+        <small style="color: #666;">Comma-separated values for dropdown options</small>
+    </div>
+    
+    <div class="form-group">
+        <label for="default_value">Default Value</label>
+        <input type="text" class="form-control" id="default_value" name="default_value" 
+               value="{{ field.default_value if field else '' }}" 
+               placeholder="Default value for new items">
+    </div>
+    
+    <div class="form-group">
+        <label for="display_order">Display Order</label>
+        <input type="number" class="form-control" id="display_order" name="display_order" 
+               value="{{ field.display_order if field else 0 }}" 
+               min="0">
+        <small style="color: #666;">Lower numbers appear first</small>
+    </div>
+    
+    <div class="form-group">
+        <label style="display: flex; align-items: center; gap: 0.5rem;">
+            <input type="checkbox" id="is_required" name="is_required" {% if field and field.is_required %}checked{% endif %}>
+            <span>Required field</span>
+        </label>
+    </div>
+    
+    <div style="display: flex; gap: 1rem;">
+        <button type="submit" class="btn btn-primary">{{ 'Update' if field else 'Create' }}</button>
+        <a href="{{ url_for('list_ci_type_fields', ci_type_id=ci_type.id) }}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+
+<script>
+function toggleOptions() {
+    var fieldType = document.getElementById('field_type').value;
+    var optionsGroup = document.getElementById('optionsGroup');
+    optionsGroup.style.display = (fieldType === 'select') ? 'block' : 'none';
+}
+// Run on page load
+toggleOptions();
+</script>
+{% endblock %}

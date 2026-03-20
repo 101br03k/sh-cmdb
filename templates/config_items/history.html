@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}History - {{ config_item.name }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <div>
+        <h1>📜 History: {{ config_item.name }}</h1>
+        <p style="color: #666;">Complete audit trail of all changes</p>
+    </div>
+    <a href="{{ url_for('view_config_item', ci_id=config_item.id) }}" class="btn btn-secondary">Back to Item</a>
+</div>
+
+<div class="filter-bar" style="margin-bottom: 1.5rem;">
+    <form method="GET" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+        <select name="action" onchange="this.form.submit()">
+            <option value="">All Actions</option>
+            <option value="created" {% if selected_action == 'created' %}selected{% endif %}>Created</option>
+            <option value="updated" {% if selected_action == 'updated' %}selected{% endif %}>Updated</option>
+            <option value="status_changed" {% if selected_action == 'status_changed' %}selected{% endif %}>Status Changed</option>
+            <option value="deleted" {% if selected_action == 'deleted' %}selected{% endif %}>Deleted</option>
+        </select>
+
+        <input type="text" name="field" placeholder="Field name contains..." 
+               value="{{ selected_field or '' }}" 
+               style="padding: 0.5rem 1rem; border: 1px solid #ced4da; border-radius: 5px;">
+
+        <select name="user" onchange="this.form.submit()">
+            <option value="">All Users</option>
+            {% for user in users %}
+            <option value="{{ user.id }}" {% if selected_user == user.id %}selected{% endif %}>
+                {{ user.username }}
+            </option>
+            {% endfor %}
+        </select>
+
+        <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1rem;">Filter</button>
+        <a href="{{ url_for('view_config_item_history', ci_id=config_item.id) }}" class="btn btn-secondary" style="padding: 0.5rem 1rem;">Clear</a>
+    </form>
+</div>
+
+{% if history %}
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>Action</th>
+                <th>Field</th>
+                <th>Old Value</th>
+                <th>New Value</th>
+                <th>Changed By</th>
+                <th>Comment</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for h in history %}
+            <tr>
+                <td style="white-space: nowrap;">{{ h.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                <td>
+                    {% if h.action == 'created' %}
+                    <span class="badge badge-success">Created</span>
+                    {% elif h.action == 'updated' %}
+                    <span class="badge badge-info">Updated</span>
+                    {% elif h.action == 'status_changed' %}
+                    <span class="badge badge-warning">Status Changed</span>
+                    {% elif h.action == 'deleted' %}
+                    <span class="badge badge-danger">Deleted</span>
+                    {% else %}
+                    <span class="badge badge-secondary">{{ h.action }}</span>
+                    {% endif %}
+                </td>
+                <td><code>{{ h.field_name or 'all' }}</code></td>
+                <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">{{ h.old_value or '-' }}</td>
+                <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">{{ h.new_value or '-' }}</td>
+                <td>{{ h.user.username }}</td>
+                <td>{{ h.comment or '-' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card" style="margin-top: 1.5rem;">
+    <h3 style="margin-bottom: 1rem;">History Summary</h3>
+    <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+        <div class="stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+            <h3 style="font-size: 2rem;">{{ history|selectattr('action', 'equalto', 'created')|list|length }}</h3>
+            <p>Created</p>
+        </div>
+        <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <h3 style="font-size: 2rem;">{{ history|selectattr('action', 'equalto', 'updated')|list|length }}</h3>
+            <p>Updated</p>
+        </div>
+        <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <h3 style="font-size: 2rem;">{{ history|selectattr('action', 'equalto', 'status_changed')|list|length }}</h3>
+            <p>Status Changes</p>
+        </div>
+        <div class="stat-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+            <h3 style="font-size: 2rem;">{{ history|length }}</h3>
+            <p>Total Events</p>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card" style="text-align: center; padding: 3rem;">
+    <p style="color: #666; font-size: 1.2rem;">No history recorded for this item yet.</p>
+    <a href="{{ url_for('view_config_item', ci_id=config_item.id) }}" class="btn btn-primary" style="margin-top: 1rem;">Back to Item</a>
+</div>
+{% endif %}
+{% endblock %}

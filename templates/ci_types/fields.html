@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Fields - {{ ci_type.name }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <div>
+        <h1>📋 Fields: {{ ci_type.name }}</h1>
+        <p style="color: #666;">Manage custom fields for this CI type</p>
+    </div>
+    <div class="actions">
+        {% if is_owner %}
+        <a href="{{ url_for('create_ci_type_field', ci_type_id=ci_type.id) }}" class="btn btn-primary">+ New Field</a>
+        {% endif %}
+        <a href="{{ url_for('view_ci_type', ci_type_id=ci_type.id) }}" class="btn btn-secondary">Back to CI Type</a>
+    </div>
+</div>
+
+{% if not is_owner %}
+<div class="flash warning">
+    <p>⚠️ You are viewing this page as a non-owner. Only owners and admins can modify fields.</p>
+</div>
+{% endif %}
+
+{% if fields %}
+<table>
+    <thead>
+        <tr>
+            <th>Order</th>
+            <th>Label</th>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Required</th>
+            <th>Default Value</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for field in fields %}
+        <tr>
+            <td>{{ field.display_order }}</td>
+            <td><strong>{{ field.label }}</strong></td>
+            <td><code>{{ field.name }}</code></td>
+            <td><span class="badge badge-info">{{ field.field_type }}</span></td>
+            <td>{% if field.is_required %}✓{% else %}-{% endif %}</td>
+            <td>{{ field.default_value or '-' }}</td>
+            <td class="actions">
+                {% if is_owner %}
+                <a href="{{ url_for('edit_ci_type_field', field_id=field.id) }}" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Edit</a>
+                <form method="POST" action="{{ url_for('delete_ci_type_field', field_id=field.id) }}" style="display: inline;" onsubmit="return confirm('Delete this field? This will remove all stored values for this field.');">
+                    <button type="submit" class="btn btn-danger" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Delete</button>
+                </form>
+                {% else %}
+                <span style="color: #888;">View only</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="card" style="text-align: center; padding: 3rem;">
+    <p style="color: #666; margin-bottom: 1rem;">No custom fields defined yet.</p>
+    {% if is_owner %}
+    <a href="{{ url_for('create_ci_type_field', ci_type_id=ci_type.id) }}" class="btn btn-primary">Create your first field</a>
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="card" style="margin-top: 1.5rem;">
+    <h3 style="margin-bottom: 1rem;">Field Types Reference</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+        <div style="background: #f8f9fa; padding: 1rem; border-radius: 5px;">
+            <strong>text</strong>
+            <p style="font-size: 0.8rem; color: #666;">Single line text</p>
+        </div>
+        <div style="background: #f8f9fa; padding: 1rem; border-radius: 5px;">
+            <strong>textarea</strong>
+            <p style="font-size: 0.8rem; color: #666;">Multi-line text</p>
+        </div>
+        <div style="background: #f8f9fa; padding: 1rem; border-radius: 5px;">
+            <strong>number</strong>
+            <p style="font-size: 0.8rem; color: #666;">Numeric value</p>
+        </div>
+        <div style="background: #f8f9fa; padding: 1rem; border-radius: 5px;">
+            <strong>email</strong>
+            <p style="font-size: 0.8rem; color: #666;">Email address</p>
+        </div>
+        <div style="background: #f8f9fa; padding: 1rem; border-radius: 5px;">
+            <strong>url</strong>
+            <p style="font-size: 0.8rem; color: #666;">Web URL</p>
+        </div>
+        <div style="background: #f8f9fa; padding: 1rem; border-radius: 5px;">
+            <strong>date</strong>
+            <p style="font-size: 0.8rem; color: #666;">Date picker</p>
+        </div>
+        <div style="background: #f8f9fa; padding: 1rem; border-radius: 5px;">
+            <strong>select</strong>
+            <p style="font-size: 0.8rem; color: #666;">Dropdown list</p>
+        </div>
+        <div style="background: #f8f9fa; padding: 1rem; border-radius: 5px;">
+            <strong>boolean</strong>
+            <p style="font-size: 0.8rem; color: #666;">Yes/No checkbox</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

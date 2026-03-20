@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit' if status else 'New' }} Status{% endblock %}
+
+{% block content %}
+<h1 style="margin-bottom: 2rem;">{{ 'Edit' if status else 'New' }} Status</h1>
+
+<form method="POST" style="max-width: 500px;">
+    <div class="form-group">
+        <label for="name">Status Name *</label>
+        <input type="text" class="form-control" id="name" name="name" required 
+               value="{{ status.name if status else '' }}" 
+               placeholder="e.g., active, maintenance, retired"
+               pattern="[a-z_][a-z0-9_]*"
+               title="Lowercase letters, numbers, and underscores only">
+        <small style="color: #666;">Internal name (lowercase, underscores, no spaces)</small>
+    </div>
+
+    <div class="form-group">
+        <label for="label">Display Label *</label>
+        <input type="text" class="form-control" id="label" name="label" required 
+               value="{{ status.label if status else '' }}" 
+               placeholder="e.g., Active, In Maintenance, Retired">
+        <small style="color: #666;">Label shown in dropdowns and lists</small>
+    </div>
+
+    <div class="form-group">
+        <label for="color">Badge Color *</label>
+        <select class="form-control" id="color" name="color" required>
+            <option value="success" {% if status and status.color == 'success' %}selected{% endif %}>Success (Green)</option>
+            <option value="info" {% if status and status.color == 'info' %}selected{% endif %}>Info (Blue)</option>
+            <option value="warning" {% if status and status.color == 'warning' %}selected{% endif %}>Warning (Yellow)</option>
+            <option value="danger" {% if status and status.color == 'danger' %}selected{% endif %}>Danger (Red)</option>
+            <option value="secondary" {% if status and status.color == 'secondary' %}selected{% endif %}>Secondary (Gray)</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="display_order">Display Order</label>
+        <input type="number" class="form-control" id="display_order" name="display_order" 
+               value="{{ status.display_order if status else 0 }}" 
+               min="0">
+        <small style="color: #666;">Lower numbers appear first in dropdowns</small>
+    </div>
+
+    <div class="form-group">
+        <label style="display: flex; align-items: center; gap: 0.5rem;">
+            <input type="checkbox" id="is_default" name="is_default" {% if status and status.is_default %}checked{% endif %}>
+            <span>Default status</span>
+        </label>
+        <small style="color: #666; margin-left: 1.5rem;">Used as default for new config items</small>
+    </div>
+
+    <div style="display: flex; gap: 1rem;">
+        <button type="submit" class="btn btn-primary">{{ 'Update' if status else 'Create' }}</button>
+        <a href="{{ url_for('list_statuses') }}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}

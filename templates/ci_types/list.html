@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}CI Types{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h1>CI Types</h1>
+    {% if current_user.is_admin %}
+    <a href="{{ url_for('create_ci_type') }}" class="btn btn-primary">+ New CI Type</a>
+    {% endif %}
+</div>
+
+{% if ci_types %}
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Items Count</th>
+            <th>Created</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for ci_type in ci_types %}
+        <tr>
+            <td>{{ ci_type.name }}</td>
+            <td>{{ ci_type.description or '-' }}</td>
+            <td>{{ ci_type.config_items.count() }}</td>
+            <td>{{ ci_type.created_at.strftime('%Y-%m-%d') }}</td>
+            <td class="actions">
+                <a href="{{ url_for('view_ci_type', ci_type_id=ci_type.id) }}" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">View</a>
+                {% if current_user.is_admin %}
+                <a href="{{ url_for('edit_ci_type', ci_type_id=ci_type.id) }}" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Edit</a>
+                <form method="POST" action="{{ url_for('delete_ci_type', ci_type_id=ci_type.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure? This will delete all associated config items.');">
+                    <button type="submit" class="btn btn-danger" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Delete</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="card" style="text-align: center; padding: 3rem;">
+    <p style="color: #666; margin-bottom: 1rem;">No CI Types defined yet.</p>
+    {% if current_user.is_admin %}
+    <a href="{{ url_for('create_ci_type') }}" class="btn btn-primary">Create your first CI Type</a>
+    {% else %}
+    <p>Contact an administrator to create CI types.</p>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

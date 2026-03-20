@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<h1 style="margin-bottom: 2rem;">Dashboard</h1>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3>{{ ci_count }}</h3>
+        <p>Configuration Items</p>
+    </div>
+    <div class="stat-card">
+        <h3>{{ ci_type_count }}</h3>
+        <p>CI Types</p>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+    <div>
+        <h2 style="margin-bottom: 1rem;">Quick Actions</h2>
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <a href="{{ url_for('create_config_item') }}" class="btn btn-primary">+ New Config Item</a>
+            <a href="{{ url_for('create_ci_type') }}" class="btn btn-success">+ New CI Type</a>
+            <a href="{{ url_for('list_config_items') }}" class="btn btn-secondary">View All Config Items</a>
+            <a href="{{ url_for('list_ci_types') }}" class="btn btn-secondary">View All CI Types</a>
+        </div>
+    </div>
+    
+    <div>
+        <h2 style="margin-bottom: 1rem;">Recent Config Items</h2>
+        {% if recent_items %}
+        <div class="card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in recent_items %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('view_config_item', ci_id=item.id) }}">{{ item.name }}</a>
+                        </td>
+                        <td>{{ item.ci_type.name }}</td>
+                        <td>
+                            {% if item.status == 'active' %}
+                            <span class="badge badge-success">{{ item.status }}</span>
+                            {% elif item.status == 'maintenance' %}
+                            <span class="badge badge-warning">{{ item.status }}</span>
+                            {% else %}
+                            <span class="badge badge-danger">{{ item.status }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="color: #666;">No config items yet. Create your first one!</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
