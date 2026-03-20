@@ -56,9 +56,9 @@ docker run -d -p 5000:5000 -v cmdb_data:/app/data --name cmdb sh-cmdb
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                      Multi-Tenant CMDB                       │
+│                      Multi-Tenant CMDB                      │
 ├─────────────────────────────────────────────────────────────┤
-│                                                              │
+│                                                             │
 │  Tenant A          Tenant B          Tenant C               │
 │  ┌────────────┐    ┌────────────┐    ┌────────────┐         │
 │  │ Users      │    │ Users      │    │ Users      │         │
@@ -66,7 +66,7 @@ docker run -d -p 5000:5000 -v cmdb_data:/app/data --name cmdb sh-cmdb
 │  │ Config Is  │    │ Config Is  │    │ Config Is  │         │
 │  │ Relations  │    │ Relations  │    │ Relations  │         │
 │  └────────────┘    └────────────┘    └────────────┘         │
-│                                                              │
+│                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
